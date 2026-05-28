@@ -1,4 +1,3 @@
-````markdown
 # Running an Amazon ECS Task
 
 ## Introduction
@@ -599,4 +598,4 @@ When the standalone task is stopped, ECS does not restart it automatically.
 This demonstrates that standalone tasks are not designed for continuous application availability.
 
 For continuous running workloads, ECS Services are required.
-````
+
