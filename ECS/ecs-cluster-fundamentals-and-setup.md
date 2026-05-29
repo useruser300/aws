@@ -1,4 +1,3 @@
-````markdown
 # Creating an Amazon ECS Cluster
 
 ## Introduction
@@ -689,4 +688,3 @@ The cluster now provides the foundation required to deploy containers using ECS.
 Although no tasks or services are running yet, the core infrastructure is ready.
 
 The next step is to create task definitions, run tasks, and deploy ECS services inside the cluster.
-````

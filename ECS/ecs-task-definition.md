@@ -1,4 +1,3 @@
-````markdown
 # Creating an Amazon ECS Task Definition
 
 ## Introduction
@@ -659,4 +658,3 @@ It defines:
 - How the container should be configured
 
 The next step is to use this task definition to run ECS tasks.
-````
