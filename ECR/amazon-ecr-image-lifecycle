@@ -1,0 +1,948 @@
+# Amazon ECR Image Lifecycle
+
+## Introduction
+
+Amazon ECR is used to store and manage container images in AWS.
+
+After understanding the core concepts of Amazon ECR, the next step is to understand the image lifecycle.
+
+The image lifecycle describes how a container image moves from being created locally to being stored, pulled, used, deleted, and cleaned up inside Amazon ECR.
+
+This section covers the complete lifecycle of a Docker image in Amazon ECR.
+
+---
+
+# Image Lifecycle Overview
+
+When working with container images, the lifecycle usually follows five main stages:
+
+1. Build
+2. Push
+3. Store
+4. Pull
+5. Delete
+
+These stages describe how an image is created, managed, used, and eventually removed.
+
+---
+
+# Stage 1: Build
+
+The first stage is building the Docker image.
+
+In this step, the application is packaged together with its dependencies and configuration into a single portable image.
+
+The image can be built:
+
+- Locally on a developer machine
+- Inside a CI/CD pipeline
+- In a build environment such as AWS CodeBuild
+
+The result is a self-contained, ready-to-run snapshot of the application.
+
+---
+
+# Stage 2: Push
+
+After the image is built, it is pushed to an ECR repository.
+
+Pushing means uploading the image from the local machine or build environment to Amazon ECR.
+
+This makes the image available in the cloud so that other services, environments, or team members can access it.
+
+The ECR repository acts as the central storage location for the container image.
+
+---
+
+# Stage 3: Store
+
+Amazon ECR stores the image securely inside a repository.
+
+During this stage, ECR handles:
+
+- Image storage
+- Image versioning using tags
+- Access control
+- Security policies
+- Optional lifecycle policies
+
+This keeps images organized, protected, and easy to retrieve when needed.
+
+---
+
+# Stage 4: Pull
+
+Pulling means downloading the image from Amazon ECR.
+
+The image can be pulled by:
+
+- Amazon ECS
+- Amazon EKS
+- Local Docker host
+- CI/CD system
+- Server or runtime environment
+
+When a container needs to start, the runtime pulls the correct image version from ECR.
+
+This ensures the application is available where it needs to run.
+
+---
+
+# Stage 5: Delete
+
+The final stage is deleting old or unused images.
+
+Deleting images helps:
+
+- Free storage space
+- Reduce cost
+- Keep repositories clean
+- Remove outdated versions
+- Avoid repository clutter
+
+This is important for maintaining efficient storage usage inside ECR.
+
+---
+
+# Moving an Image Through Its Lifecycle
+
+The practical workflow for moving an image through its ECR lifecycle includes the following steps:
+
+1. Create a Docker image locally.
+2. Create an ECR repository.
+3. Authenticate Docker to the ECR registry.
+4. Push the image to ECR.
+5. Pull the image back from ECR.
+6. Delete the image from ECR.
+7. Delete the ECR repository.
+
+---
+
+# GitHub Repository Setup
+
+A GitHub repository is used as the reference project for the ECS and ECR examples.
+
+The project includes:
+
+- Source code
+- Dockerfile
+- Required commands
+- Reference links
+- Step-by-step instructions
+
+For this setup, a specific branch is used:
+
+```text
+ECR Basics
+```
+
+This branch contains the commands and files needed to follow the ECR lifecycle workflow.
+
+---
+
+# Setting Up the Local Environment
+
+Before working with ECR, the local machine needs to be prepared.
+
+The setup is based on macOS.
+
+The required tools are:
+
+- Homebrew
+- Colima
+- Docker
+- AWS CLI version 2
+
+---
+
+# Installing Homebrew
+
+Homebrew is a package manager for macOS.
+
+It helps install, update, and manage software from the terminal.
+
+Homebrew simplifies software installation and avoids complicated manual setup steps.
+
+It is used here to install the tools needed for Docker and AWS CLI workflows.
+
+---
+
+# Installing Colima
+
+Colima is a lightweight container runtime for macOS.
+
+It provides a Linux-based environment that allows Docker containers to run on macOS.
+
+Colima is useful because Docker containers require a Linux environment.
+
+It works without needing Docker Desktop.
+
+Colima is:
+
+- Lightweight
+- Open source
+- Fast
+- Compatible with Docker
+
+---
+
+# Installing Docker
+
+Docker is installed using Homebrew.
+
+Docker is required to:
+
+- Build container images
+- Run containers locally
+- Tag images
+- Push images to ECR
+- Pull images from ECR
+
+After Docker is installed, it is started using Colima.
+
+---
+
+# Starting Docker with Colima
+
+Colima starts the container runtime in the background.
+
+Once Colima is running, Docker can work properly on macOS.
+
+After starting Docker, verify the installation by checking the Docker version:
+
+```bash
+docker --version
+```
+
+---
+
+# Testing Docker with Hello World
+
+To confirm Docker is working, run the official Hello World container:
+
+```bash
+docker run hello-world
+```
+
+If the expected message appears, Docker is installed and working correctly.
+
+---
+
+# Installing AWS CLI Version 2
+
+AWS CLI version 2 is required to interact with AWS services from the terminal.
+
+It is used to:
+
+- Configure AWS credentials
+- Create ECR repositories
+- Authenticate Docker to ECR
+- Push images
+- Pull images
+- List images
+- Delete images
+- Delete repositories
+
+The AWS CLI v2 package is downloaded and installed locally.
+
+---
+
+# Verifying AWS CLI Installation
+
+After installation, verify where the AWS CLI is installed using:
+
+```bash
+which aws
+```
+
+Then verify the installed version:
+
+```bash
+aws --version
+```
+
+If the version appears correctly, the AWS CLI is ready to use.
+
+---
+
+# Building the Docker Image
+
+After preparing the local environment, the next step is to build the Docker image.
+
+First, clone the project repository locally.
+
+Then check out the correct branch:
+
+```text
+ECR Basics
+```
+
+Open the project in Visual Studio Code and navigate to the folder containing the Dockerfile.
+
+---
+
+# Dockerizing the Node.js Application
+
+The application used in this setup is a Node.js monolith application.
+
+To create a Docker image, use the Docker build command.
+
+The build command reads the Dockerfile and creates an image based on the instructions inside it.
+
+Example:
+
+```bash
+docker build -t node-monolith-app .
+```
+
+---
+
+# Verifying the Built Image
+
+After the build completes, list local Docker images:
+
+```bash
+docker images
+```
+
+The output should show the newly built Node.js monolith image.
+
+If the environment is fresh, the local images may include:
+
+- hello-world
+- node-monolith-app
+
+---
+
+# Running the Docker Image Locally
+
+After building the image, run it locally as a container.
+
+This confirms that the image works before pushing it to ECR.
+
+Example:
+
+```bash
+docker run -p 3000:3000 node-monolith-app
+```
+
+After the container starts, open the application URL in the browser.
+
+If the homepage appears, the application is running successfully inside the container.
+
+---
+
+# Creating an IAM User for ECR
+
+A dedicated IAM user is created for this ECR workflow.
+
+This user is used to access Amazon ECR from the AWS CLI.
+
+Since the focus is only on ECR, the user is given ECR-related permissions.
+
+---
+
+# Creating the IAM User
+
+To create the IAM user:
+
+1. Open the IAM Console.
+2. Go to Users.
+3. Click Create user.
+4. Provide a clear username for ECR access.
+5. Enable AWS Console access.
+6. Choose the IAM user option.
+7. Set a custom password.
+8. Continue to permissions.
+
+For this demo, forcing the user to create a new password at next sign-in is not enabled.
+
+---
+
+# Assigning ECR Permissions
+
+On the permissions page, choose:
+
+```text
+Attach policies directly
+```
+
+Search for and select:
+
+```text
+AmazonEC2ContainerRegistryFullAccess
+```
+
+This policy gives the IAM user access to Amazon ECR.
+
+After reviewing the configuration, create the user.
+
+---
+
+# IAM User Sign-In Details
+
+After the IAM user is created, AWS displays the console sign-in details.
+
+These details can be used to log in to the AWS Management Console as the new IAM user.
+
+---
+
+# Creating an Access Key
+
+An access key is required for AWS CLI authentication.
+
+An access key includes two parts:
+
+- Access key ID
+- Secret access key
+
+These credentials allow the AWS CLI to authenticate as the IAM user.
+
+---
+
+# Creating the Access Key for CLI Usage
+
+To create an access key:
+
+1. Open the IAM user details page.
+2. Go to the Security credentials tab.
+3. Scroll to the Access keys section.
+4. Click Create access key.
+5. Select Command Line Interface as the use case.
+6. Confirm the warning.
+7. Add an optional description tag.
+8. Create the access key.
+
+After creation, copy or download:
+
+- Access key ID
+- Secret access key
+
+These values are needed for AWS CLI configuration.
+
+---
+
+# Configuring AWS CLI
+
+The AWS CLI is configured using:
+
+```bash
+aws configure
+```
+
+This command links the local CLI to a specific AWS user account.
+
+It stores credentials and default settings locally.
+
+---
+
+# AWS Configure Inputs
+
+The command asks for:
+
+```text
+AWS Access Key ID
+AWS Secret Access Key
+Default region name
+Default output format
+```
+
+For this setup:
+
+```text
+Default region: us-east-1
+Default output format: blank/default
+```
+
+---
+
+# AWS CLI Configuration Files
+
+After running `aws configure`, a hidden folder is created in the home directory:
+
+```text
+~/.aws
+```
+
+Inside this folder, there are two important files:
+
+```text
+config
+credentials
+```
+
+If these files exist, the AWS CLI configuration was successful.
+
+---
+
+# Verifying AWS CLI Access
+
+To verify that the AWS CLI works, list the ECR repositories:
+
+```bash
+aws ecr describe-repositories
+```
+
+If no repositories exist yet, the response should succeed but return an empty list.
+
+This confirms that the AWS CLI is configured correctly.
+
+---
+
+# Verifying ECR Console Access
+
+Log in to the AWS Management Console using the newly created IAM user.
+
+Open the ECR Console.
+
+Go to:
+
+```text
+Repositories
+```
+
+Make sure the console region matches the CLI default region:
+
+```text
+us-east-1
+```
+
+At this point, no repositories should exist yet.
+
+---
+
+# Creating an ECR Repository
+
+After building the Docker image locally, the next step is creating an ECR repository.
+
+The repository stores the Docker image in AWS.
+
+A repository can be created in two ways:
+
+1. Using AWS CLI
+2. Using AWS Management Console
+
+---
+
+# Creating an ECR Repository Using AWS CLI
+
+Use an AWS CLI command to create the repository.
+
+Example:
+
+```bash
+aws ecr create-repository --repository-name node-monolith-app
+```
+
+If no region is specified in the command, AWS uses the default region configured in the CLI.
+
+After running the command, AWS returns a success response confirming that the repository was created.
+
+---
+
+# Verifying the Repository in the Console
+
+Open the ECR Console and refresh the repositories page.
+
+The new repository should appear.
+
+This confirms that the repository was created successfully using the CLI.
+
+---
+
+# Creating an ECR Repository from the Console
+
+A repository can also be created directly from the AWS Management Console.
+
+Steps:
+
+1. Open the ECR Console.
+2. Go to Repositories.
+3. Click Create repository.
+4. Enter a clear repository name.
+5. Review image tag settings.
+6. Review encryption settings.
+7. Review image scanning settings.
+8. Create the repository.
+
+---
+
+# Repository Name
+
+The repository name should be clear and descriptive.
+
+A good repository name helps identify the purpose of the image later.
+
+---
+
+# Image Tag Settings
+
+Image tag settings control whether tags can be overwritten after an image is pushed.
+
+This is called image tag mutability.
+
+There are two main options:
+
+- Mutable
+- Immutable
+
+---
+
+# Mutable Tags
+
+Mutable tags can be overwritten.
+
+This means a new image can be pushed using the same tag and replace the previous tag reference.
+
+Mutable tags are useful for pull-through cache workflows because ECR can update cached images.
+
+---
+
+# Immutable Tags
+
+Immutable tags cannot be overwritten.
+
+Once an image is pushed with a tag, that tag cannot be replaced.
+
+This helps prevent accidental overwrites and provides stronger version safety.
+
+Immutable tags are useful when you want each tag to always point to the same image.
+
+---
+
+# Mutable Tag Exclusion
+
+Mutable tag exclusion allows specific tags to be excluded from immutability rules.
+
+This provides more flexibility when some tags should remain mutable while others are protected.
+
+For this setup, the default tag settings are used.
+
+---
+
+# Encryption Settings
+
+Encryption settings define how repository data is encrypted at rest.
+
+Amazon ECR supports:
+
+1. AES-256
+2. AWS KMS
+
+---
+
+# AES-256 Encryption
+
+With AES-256, Amazon ECR uses server-side encryption with Amazon S3-managed encryption keys.
+
+This uses the AES-256 algorithm.
+
+This option comes at no additional cost.
+
+---
+
+# AWS KMS Encryption
+
+With AWS KMS, ECR uses server-side encryption with AWS Key Management Service.
+
+You can use:
+
+- Default AWS-managed key
+- Customer-managed key
+
+A customer-managed key gives more control over encryption and access.
+
+For this setup, the default encryption settings are used.
+
+---
+
+# Image Scanning Settings
+
+Image scanning settings used to be configurable at the repository level.
+
+This repository-level setting is now deprecated.
+
+Image scanning is now managed at the registry level with repository filtering.
+
+For this setup, the default image scanning settings are used.
+
+---
+
+# Authenticating to the ECR Registry
+
+Before pushing an image to ECR, Docker must authenticate to the ECR registry.
+
+Authentication connects the local Docker client securely to Amazon ECR.
+
+This step is required before Docker can push or pull images from a private ECR repository.
+
+---
+
+# ECR Login Command
+
+The AWS CLI is used to retrieve an ECR login password.
+
+That password is passed to Docker login.
+
+Example:
+
+```bash
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <account-id>.dkr.ecr.us-east-1.amazonaws.com
+```
+
+After the command succeeds, Docker is authenticated to the ECR registry.
+
+---
+
+# Pushing the Docker Image to ECR
+
+After authentication, the next step is pushing the local Docker image to the ECR repository.
+
+Before pushing, list the local Docker images:
+
+```bash
+docker images
+```
+
+The image built earlier should appear in the list.
+
+---
+
+# Tagging the Docker Image
+
+Before pushing to ECR, the local image must be tagged with the ECR repository URI.
+
+Image tagging gives the Docker image a label that identifies its target registry and repository.
+
+This tells Docker where the image should be pushed.
+
+Example:
+
+```bash
+docker tag node-monolith-app:latest <account-id>.dkr.ecr.us-east-1.amazonaws.com/node-monolith-app:latest
+```
+
+The tagged image is not a completely new image.
+
+It is another reference or alias pointing to the same underlying image, but with a tag that points to the ECR repository.
+
+---
+
+# Verifying the Tagged Image
+
+List local images again:
+
+```bash
+docker images
+```
+
+The output should show a new image entry using the ECR repository URI.
+
+This confirms that the image was tagged correctly.
+
+---
+
+# Pushing the Image
+
+Push the tagged image to ECR:
+
+```bash
+docker push <account-id>.dkr.ecr.us-east-1.amazonaws.com/node-monolith-app:latest
+```
+
+The first push may take longer because Docker uploads all image layers to ECR.
+
+Future pushes are usually faster because Docker and ECR use layer caching.
+
+Only changed layers need to be uploaded again.
+
+---
+
+# Verifying the Image in ECR Console
+
+Open the ECR Console.
+
+Go to Repositories.
+
+Select the repository that was created earlier.
+
+The pushed image should now appear inside the repository.
+
+Open the image details to view information such as:
+
+- Image tag
+- Image URI
+- Image digest
+- Metadata
+
+---
+
+# Listing Images with AWS CLI
+
+The image can also be verified from the terminal.
+
+Example:
+
+```bash
+aws ecr list-images --repository-name node-monolith-app
+```
+
+The output should show an image with the tag:
+
+```text
+latest
+```
+
+This confirms that the image was pushed successfully.
+
+---
+
+# Pulling the Docker Image from ECR
+
+The next step is pulling the image from ECR back into the local environment.
+
+Before pulling, remove the tagged local image to avoid confusion.
+
+---
+
+# Removing the Local Tagged Image
+
+List local Docker images:
+
+```bash
+docker images
+```
+
+Remove the tagged image:
+
+```bash
+docker rmi <account-id>.dkr.ecr.us-east-1.amazonaws.com/node-monolith-app:latest
+```
+
+List images again to confirm it was removed.
+
+---
+
+# Pulling the Image
+
+Copy the image URI from the ECR Console.
+
+Then pull the image:
+
+```bash
+docker pull <account-id>.dkr.ecr.us-east-1.amazonaws.com/node-monolith-app:latest
+```
+
+Docker downloads the image from ECR.
+
+After the pull completes, the image is available locally again.
+
+---
+
+# Verifying the Pulled Image
+
+List local Docker images:
+
+```bash
+docker images
+```
+
+The image pulled from ECR should appear in the local image list.
+
+This confirms that the image can be retrieved successfully from Amazon ECR.
+
+---
+
+# Deleting the Docker Image from ECR
+
+After verifying the push and pull workflow, the next step is deleting the image from ECR.
+
+This removes the image from the repository.
+
+Example:
+
+```bash
+aws ecr batch-delete-image \
+  --repository-name node-monolith-app \
+  --image-ids imageTag=latest
+```
+
+After running the command, AWS returns a confirmation response.
+
+---
+
+# Verifying Image Deletion
+
+Open the ECR Console and refresh the repository images page.
+
+The image should no longer appear.
+
+You can also verify from the CLI:
+
+```bash
+aws ecr list-images --repository-name node-monolith-app
+```
+
+The output should show an empty list.
+
+This confirms that the image was deleted successfully.
+
+---
+
+# Deleting the ECR Repository
+
+The final step is deleting the repository itself.
+
+Before deletion, list all repositories:
+
+```bash
+aws ecr describe-repositories
+```
+
+Then delete the repository:
+
+```bash
+aws ecr delete-repository --repository-name node-monolith-app
+```
+
+After running the command, AWS returns a success response with repository details.
+
+---
+
+# Verifying Repository Deletion
+
+List repositories again:
+
+```bash
+aws ecr describe-repositories
+```
+
+The repository created through the CLI should no longer appear.
+
+Open the ECR Console and refresh the repositories page.
+
+The deleted repository should be gone.
+
+This confirms that the repository was deleted successfully.
+
+---
+
+# Final Result
+
+At the end of this workflow, the Docker image has moved through its complete Amazon ECR lifecycle.
+
+The lifecycle included:
+
+1. Building the image locally
+2. Creating an ECR repository
+3. Authenticating Docker to ECR
+4. Tagging the image
+5. Pushing the image to ECR
+6. Verifying the image in ECR
+7. Pulling the image back locally
+8. Deleting the image from ECR
+9. Deleting the ECR repository
+
+This workflow demonstrates how Amazon ECR is used to store, manage, distribute, retrieve, and clean up Docker images.
+
+The next step is to integrate Amazon ECR with Amazon ECS and deploy a Docker image from ECR directly into ECS.
